@@ -1,0 +1,10 @@
+<pre id='test'></pre>
+
+<script>
+  // reading
+  var es = new EventSource('/stream?channel=testchannel&event=testevent');
+  es.onmessage = function(e) {
+    jQuery('#test').append(e.data);
+  };
+
+</script>
