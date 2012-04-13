@@ -4,12 +4,19 @@ class Application < Sinatra::Application
   set publisher: Publisher.new
 
   get '/stream', provides: 'text/event-stream' do
-    stream :keep_open do |stream|
-      settings.publisher.new_connection(params[:channel].to_s, params[:event].to_s, stream)
+    stream :keep_open do |out|
+      settings.publisher.subscribe(params[:channel].to_s, params[:event].to_s, out)
+      out.callback do
+        settings.publisher.unsubscribe(params[:channel].to_s, params[:event].to_s, out)
+      end
+      out.errback do
+        settings.publisher.unsubscribe(params[:channel].to_s, params[:event].to_s, out)
+      end
     end
   end
 
   post '/publish' do
+    logger.info "publishing to #{params[:channel]} - #{params[:event]}"
     settings.publisher.broadcast(params[:channel].to_s, params[:event].to_s, params[:data].to_s)
     204 # response without entity body
   end

@@ -3,15 +3,25 @@ class Publisher
     @connections = {}
   end
 
-  def new_connection(channel, event, stream)
-    @connections[channel.to_sym] ||= {}
-    @connections[channel.to_sym][event.to_sym] ||= [] #unless @connections[channel.to_sym][event.to_sym]
-    @connections[channel.to_sym][event.to_sym] << stream
+  def subscribe(channel, event, stream)
+    @connections[channel] ||= {}
+    @connections[channel][event] ||= []
+    @connections[channel][event] << stream
+    stream
+  end
+
+  def unsubscribe(channel, event, stream)
+    if @connections[channel] && @connections[channel][event]
+      @connections[channel][event].delete(stream)
+      @connections[channel].delete(event) if @connections[channel][event].empty?
+      @connections.delete(channel) if @connections[channel].empty?
+    end
+    stream
   end
 
   def streams(channel, event)
-    if @connections[channel.to_sym]
-      @connections[channel.to_sym][event.to_sym] || []
+    if @connections[channel]
+      @connections[channel][event] || []
     else
       []
     end
@@ -22,6 +32,9 @@ class Publisher
   end
 
   def to_s
-    @connections.to_s
+    @connections.keys.inject({}) do |result, channel|
+      result[channel] = @connections[channel].keys
+      result
+    end.to_s
   end
 end
