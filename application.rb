@@ -30,3 +30,4 @@ class Application < Sinatra::Application
     settings.publisher.to_s
   end
 end
+
